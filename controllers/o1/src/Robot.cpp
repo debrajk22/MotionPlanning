@@ -1,4 +1,7 @@
 #include "Robot.hpp"
+#include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace robot;
 
@@ -76,6 +79,22 @@ void RobotKinematic::forwardKinematics(Point2D &outForward, double s1,
     outForward.theta = (s1 + s2 + s3 + s4) / (4 * L);
 }
 
+std::string encode_w(double w1, double w2)
+{
+    w1*=(900/M_PI);
+    w2*=(900/M_PI);
+    std::string str1 = std::to_string((int)abs(w1)), str2 = std::to_string((int)abs(w2));
+
+    if (str1.length() < 4) {
+        str1 = std::string(4 - str1.length(), '0') + str1;
+    }
+    if (str2.length() < 4) {
+        str2 = std::string(4 - str2.length(), '0') + str2;
+    }
+
+    return str1 + str2 + std::to_string(w1<0) + std::to_string(w2<0) + '\n';
+}
+
 void RobotKinematic::inverseKinematics(wheelAngularVel &outputInverse,
                                        double velglobal_x, double velglobal_y,
                                        double velglobal_theta) {
@@ -95,4 +114,24 @@ void RobotKinematic::inverseKinematics(wheelAngularVel &outputInverse,
         (cos(a * M_PI / 180) * velglobal_x + sin(a * M_PI / 180) * velglobal_y +
          L * velglobal_theta) /
         r_wheel;
+
+    std::string port1 = "/dev/ttyUSB0", port2 = "/dev/ttyUSB1";
+    std::ofstream arduino1(port1);
+    std::ofstream arduino2(port2);
+
+    if (!arduino1.is_open()) {
+        std::cerr << "Failed to open port " << port1 << std::endl;
+        return;
+    }
+    if (!arduino2.is_open()) {
+        std::cerr << "Failed to open port " << port2 << std::endl;
+        return;
+    }
+
+    arduino1 << encode_w(outputInverse.w1, outputInverse.w2);
+    arduino2 << encode_w(outputInverse.w3, outputInverse.w4);
+
+    std::cout << encode_w(outputInverse.w1, outputInverse.w2) + " " + encode_w(outputInverse.w3, outputInverse.w4) + '\n';
+
+    return;
 }

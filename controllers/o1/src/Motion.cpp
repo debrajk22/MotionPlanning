@@ -129,6 +129,8 @@ void Motion::positionAngularControl(double &errorX, double &errorY,
     std::cout << "angle = " << angle << std::endl;
 
     if (count >= path.size() - 30) speed = 10;
+    if ((currentX - path[path.size()-1].x) * (currentX - path[path.size()-1].x) + 
+    (currentY - path[path.size()-1].y) * (currentY - path[path.size()-1].y) <= 0.1) speed = 0;
 
     std::cout << "speed = " << speed << std::endl;
     std::cout << "minDistance = " << minDistance << std::endl;
