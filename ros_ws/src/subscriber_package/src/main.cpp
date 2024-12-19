@@ -37,7 +37,7 @@ planningObjective objectiveType = OBJECTIVE_PATHLENGTH;
 
 long long int iteration_count = 0;
 int flag = 0;
-double obs_size = 0.7;
+double obs_size = 1;
 double max_angle = 0.5;
 
 std::vector<Point2D> obs(9), targetPos;
