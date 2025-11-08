@@ -10,7 +10,8 @@
 #include <webots/position_sensor.h>
 
 
-#define DISTANCE_OF_WHEELS_FROM_CENTER 0.1 // Diagonal/2
+// #define DISTANCE_OF_WHEELS_FROM_CENTER 0.1 // Diagonal/2
+#define DISTANCE_OF_WHEELS_FROM_CENTER 0.35355 // Diagonal/2
 #define WHEEL_RADIUS 0.05 // Adjust to your robot's wheel radius
 #define ROOT_2 1.41421356237 // Pre-calculated value of sqrt(2)
 #define SAMPLING_PERIOD 25 // GPS sampling time in ms
@@ -68,8 +69,77 @@ namespace my_robot_driver_O1 {
         }
     );
 
+    data_received = std::vector<bool>(9, false);
+    robots_ = std::vector<RobotInfo>(9);
+
+    // Subscribers for other robots' data
+    o2_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "o2_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[0].x = msg->data[0];
+        robots_[0].y = msg->data[1];
+        robots_[0].theta = msg->data[2];
+        data_received[0] = true;
+    });
+    o3_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "o3_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[1].x = msg->data[0];
+        robots_[1].y = msg->data[1];
+        robots_[1].theta = msg->data[2];
+        data_received[1] = true;
+    });
+    o4_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "o4_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[2].x = msg->data[0];
+        robots_[2].y = msg->data[1];
+        robots_[2].theta = msg->data[2];
+        data_received[2] = true;
+    });
+    o5_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "o5_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[3].x = msg->data[0];
+        robots_[3].y = msg->data[1];
+        robots_[3].theta = msg->data[2];
+        data_received[3] = true;
+    });
+    b1_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "b1_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[4].x = msg->data[0];
+        robots_[4].y = msg->data[1];
+        robots_[4].theta = msg->data[2];
+        data_received[4] = true;
+    });
+    b2_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "b2_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[5].x = msg->data[0];
+        robots_[5].y = msg->data[1];
+        robots_[5].theta = msg->data[2];
+        data_received[5] = true;
+    });
+    b3_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "b3_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[6].x = msg->data[0];
+        robots_[6].y = msg->data[1];
+        robots_[6].theta = msg->data[2];
+        data_received[6] = true;
+    });
+    b4_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "b4_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[7].x = msg->data[0];
+        robots_[7].y = msg->data[1];
+        robots_[7].theta = msg->data[2];
+        data_received[7] = true;
+    });
+    b5_data_ = node->create_subscription<std_msgs::msg::Float32MultiArray>(
+      "b5_data", 10, [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
+        robots_[8].x = msg->data[0];
+        robots_[8].y = msg->data[1];
+        robots_[8].theta = msg->data[2];
+        data_received[8] = true;
+    });
+
     // Publish GPS, IMU and encoder data
     o1_publisher_ = node->create_publisher<std_msgs::msg::Float32MultiArray>("self_position", 10);
+    obs_publisher_ = node->create_publisher<std_msgs::msg::Float32MultiArray>("obstacles", 10);
 
     timer_ = node->create_wall_timer(std::chrono::milliseconds(SAMPLING_PERIOD), [this]() { // Timer for periodic publishing
       wb_robot_step(SAMPLING_PERIOD);                       // Step simulation in Webots
@@ -84,6 +154,19 @@ namespace my_robot_driver_O1 {
       msg.data = {static_cast<float>(gps_position[0]), static_cast<float>(gps_position[1]), static_cast<float>(imu_position[2])};
       // msg.data = {static_cast<float>(gps_position[0]), static_cast<float>(gps_position[1]), static_cast<float>(imu_position[2]), static_cast<float>(enc_1_position), static_cast<float>(enc_2_position), static_cast<float>(enc_3_position), static_cast<float>(enc_4_position)};
       o1_publisher_->publish(msg);                         // Publish GPS data
+
+      bool received_all = true;
+      for (const auto& received : data_received) received_all &= received;
+      if (!received_all) return;
+
+      std_msgs::msg::Float32MultiArray obs_msg;
+      obs_msg.data.push_back(robots_.size());
+      for (const auto& robot : robots_) {
+          obs_msg.data.push_back(robot.x);
+          obs_msg.data.push_back(robot.y);
+          obs_msg.data.push_back(robot.theta);
+      }
+      obs_publisher_->publish(obs_msg);
     });
   }
 
