@@ -20,6 +20,8 @@ There are 4 workspaces:
 7. Webots-ROS2 package
 8. Pygame
 9. Pyserial
+10. PyYAML
+11. numpy
 
 ```
 sudo apt update && sudo apt upgrade

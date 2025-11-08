@@ -52,8 +52,10 @@ bool check_path(const Point2D &path_point, const Point2D &obs_point) {
 class ListenerNode : public rclcpp::Node {
 public:
     ListenerNode() : Node("listener_node") { // Create subscribers for two topics
-        obs_subscriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/obstacles", 10, std::bind(&ListenerNode::obstacle_callback, this, std::placeholders::_1));
-        self_subcriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/self_position", 10, std::bind(&ListenerNode::self_callback, this, std::placeholders::_1));
+        // obs_subscriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/obstacles", 10, std::bind(&ListenerNode::obstacle_callback, this, std::placeholders::_1));
+        obs_subscriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/o1_obstacles", 10, std::bind(&ListenerNode::obstacle_callback, this, std::placeholders::_1));
+        // self_subcriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/self_position", 10, std::bind(&ListenerNode::self_callback, this, std::placeholders::_1));
+        self_subcriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/o1_data", 10, std::bind(&ListenerNode::self_callback, this, std::placeholders::_1));
         ball_subscriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/ball_data", 10, std::bind(&ListenerNode::ball_callback, this, std::placeholders::_1));
         decision_target_subscriber = this->create_subscription<std_msgs::msg::Float32MultiArray>("/decision_target_data", 10, std::bind(&ListenerNode::decision_target_callback, this, std::placeholders::_1));
         path_publisher = this->create_publisher<std_msgs::msg::Float32MultiArray>("/planned_path", 10);
@@ -63,9 +65,9 @@ public:
     void obstacle_callback(const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
         obs_mutex.lock();
         obs.clear();
-        for (int i = 1; i < 3 * msg->data[0] + 1 ; i += 3)
+        for (int i = 0; i < msg->data[0]; i++)
         {
-            obs.push_back(Point2D(msg->data[i], msg->data[i + 1], msg->data[i + 2]));
+            obs.push_back(Point2D(msg->data[2*i + 1], msg->data[2*i + 2], 0));
         }
         obs_received = true;
         obs_mutex.unlock();
